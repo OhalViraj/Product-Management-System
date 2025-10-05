@@ -7,10 +7,15 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import com.apidemo.dto.ProductDto;
+import com.apidemo.dto.ProductResponse;
 import com.apidemo.model.Product;
 import com.apidemo.repository.ProductRepository;
 import com.apidemo.service.ProductService;
@@ -80,5 +85,39 @@ public class ProductServiceImpl implements ProductService{
 		}
 		return false;
 	}
+
+	@Override
+	public ProductResponse getProductsWithPagination(int pageNo, int pageSize, String sortBy, String sortDir) {
+		// TODO Auto-generated method stub
+		
+		Sort sort=sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+		
+		Pageable pageable = PageRequest.of(pageNo, pageSize);
+    	Page<Product> page = productRepository.findAll(pageable);
+		
+    	List<Product> products = page.getContent();
+    	
+    	List<ProductDto> productDtos=products.stream().map(prod ->mapper.map(prod, ProductDto.class)).toList();
+    	
+    	long totalElements = page.getTotalElements();
+    	int totalPages = page.getTotalPages();
+    	boolean first = page.isFirst();
+    	boolean last = page.isLast();
+    	
+		/*
+		 * ProductResponse productResponse=new ProductResponse();
+		 * productResponse.setProducts(productDtos);
+		 * productResponse.setTotalElement(totalElements);
+		 */
+    	
+    	
+    	ProductResponse productResponse=ProductResponse.builder().products(productDtos).totalElement(totalElements).totalPages(totalPages).isFirst(first).
+    	isLast(last).pageNo(pageNo).pageSize(pageSize).build();
+    	
+	
+    	return productResponse;
+	}
 	
 }
+
+
